@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Password Generator</title>
+</head>
+
+<body>
+    <h1>Password Generator</h1>
+    <div style="display: flex; flex-direction:column; width: 100px;">
+        <label for="length">Length</label>
+        <input type="number" name="length" id="length" min="1" max="100" value="10">
+        <label for="complexity">Complexity</label>
+        <select name="complexity" id="complexity" size="3">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+        </select>
+        <label for="format">Format</label>
+        <select name="format" id="format" size="3">
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+            <option value="xml">XML</option>
+        </select>
+        <input type="submit" value="Generate" onclick="getPassword();">
+    </div>
+
+    <h2>Generated password</h1>
+        <p id="customPassword">You haven't generated a password yet</p>
+
+    <h3>Raw response</h3>
+    <p id="rawResponse">You haven't generated a password yet</p>
+
+        <hr>
+
+        <h1>Auto generated password (every 5 seconds)</h1>
+        <i>Generated with length 10, complexity high, format xml</i>
+        <p id="password"></p>
+        <script>
+            function getPassword() {
+                var length = document.getElementById("length").value;
+                var complexity = document.getElementById("complexity").value;
+                var format = document.getElementById("format").value;
+                var url = "./server.php?length=" + length + "&complexity=" + complexity + "&format=" + format;
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        if (format == "csv") {
+                            var csv = this.responseText;
+                            var lines = csv.split("\n");
+                            var result = lines[1];
+
+                            document.getElementById("customPassword").innerHTML = result;
+                            document.getElementById("rawResponse").innerHTML = this.response;
+                        }
+                        if (format == "json") {
+                            var json = JSON.parse(this.responseText);
+                            var result = json.generatedPassword;
+
+                            document.getElementById("customPassword").innerHTML = result;
+                            document.getElementById("rawResponse").innerHTML = this.response;
+                        }
+                        if (format == "xml") {
+                            var xml = this.responseXML;
+                            var result = xml.getElementsByTagName("generatedPassword")[0].childNodes[0].nodeValue;
+
+                            document.getElementById("customPassword").innerHTML = result;
+                            document.getElementById("rawResponse").innerHTML = this.response;
+                        }
+                    }
+                };
+                xhttp.open("GET", url, true);
+                xhttp.send();
+            }
+
+            setInterval(function () {
+                var url = "./server.php?length=10&complexity=high&format=xml";
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        document.getElementById("password").innerHTML = this.responseText;
+                    }
+                };
+                xhttp.open("GET", url, true);
+                xhttp.send();
+            }, 5000);
+        </script>
+</body>
+
+</html>
